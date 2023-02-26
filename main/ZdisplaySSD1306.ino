@@ -467,7 +467,7 @@ OledSerial::OledSerial(int x) {
   delay(50);
   digitalWrite(RST_OLED, HIGH);
   display = new SSD1306Wire(0x3c, SDA_OLED, SCL_OLED, GEOMETRY_64_32);
-#  elif defined(ARDUINO_TTGO_LoRa32_v21new) // LILYGO® Disaster-Radio LoRa V2.1_1.6.1
+#  elif defined(ARDUINO_TTGO_LoRa32_v21new) || defined(ARDUINO_TTGO_LoRa32_V1) // LILYGO® Disaster-Radio LoRa V2.1_1.6.1
   pinMode(OLED_RST, OUTPUT);
   digitalWrite(OLED_RST, LOW);
   delay(50);
