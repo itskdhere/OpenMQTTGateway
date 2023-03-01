@@ -295,6 +295,8 @@ void createDiscovery(const char* sensor_type,
   }
   if (payload_off[0])
     sensor["pl_off"] = payload_off; //payload_off
+  if (strcmp(sensor_type, "device_tracker") == 0)
+    sensor["source_type "] = "bluetooth_le"; // payload_install for update
   if (off_delay != 0)
     sensor["off_delay"] = off_delay; //off_delay
   if (payload_available[0])
@@ -1022,6 +1024,15 @@ void pubMqttDiscovery() {
                   0, //set off_delay
                   Gateway_AnnouncementMsg, will_Message, true, subjectMQTTtoBTset, //set,payload_available,payload_not available,is a gateway entity, command topic
                   "", "", "", "", false, // device name, device manufacturer, device model, device ID, retain
+                  stateClassNone //State Class
+  );
+  createDiscovery("number", //set Type
+                  subjectBTtoMQTT, "BT: Presence detection timer", (char*)getUniqueId("presenceawaytimer", "").c_str(), //set state_topic,name,uniqueId
+                  will_Topic, "", "{{ value_json.presenceawaytimer/60000 }}", //set availability_topic,device_class,value_template,
+                  "{\"presenceawaytimer\":{{value*60000}},\"save\":true}", "", "min", //set,payload_on,payload_off,unit_of_meas,
+                  0, //set  off_delay
+                  Gateway_AnnouncementMsg, will_Message, true, subjectMQTTtoBTset, //set,payload_available,payload_not available   ,is a gateway entity, command topic
+                  "", "", "", "", false, // device name, device manufacturer, device model, device ID, retain,
                   stateClassNone //State Class
   );
   createDiscovery("button", //set Type

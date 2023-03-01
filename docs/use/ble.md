@@ -5,7 +5,19 @@ We strongly encourage the use of a white-list (see below) so as to collect data 
 By default the gateway scans the advertizing BLE devices nearby with their MAC addresses. Depending on your country, it may be illegal to monitor networks for MAC addresses, especially on networks that you do not own. Please check your country's laws (for US Section 18 U.S. Code § 2511) - [discussion here](https://github.com/schollz/howmanypeoplearearound/issues/4).
 :::
 
-## Receiving signals from BLE beacon devices for Presence detection
+## Receiving signals from BLE tracker devices for Presence detection
+By default the gateway will detect the BLE trackers from NUT, TAGIT, ITAG, MiBand, Amazfit and RuuviTag and create automaticaly a device tracker entity following the Home Assistant discovery convention.
+The entity can be attached to a person to leverage presence detection. The `away` or `not home` state is triggered if the BLE tracker is not detected during the timer defined by `presenceawaytimer`.
+
+![](../img/OpenMQTTGateway-BLE-tracker-Home-Assistant.png)
+
+If you have multiple gateways, your BLE trackers may not be detected temporary by one gateway but still by the others. In this case you will see the tracker appears offline briefly and online again once it is detected by the others gateways.
+
+By default `presenceawaytimer` is set to 120s, you can change it with the following command (ms)
+
+`mosquitto_pub -t home/OpenMQTTGateway/commands/MQTTtoBT/config -m '{"presenceawaytimer":66000}'`
+
+## Receiving signals from BLE beacon devices for Room presence detection
 
 Subscribe to all the messages with mosquitto or open your MQTT client software:
 
