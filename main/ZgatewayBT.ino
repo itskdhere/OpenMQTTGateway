@@ -143,6 +143,16 @@ void BTConfig_fromJson(JsonObject& BTdata, bool startup = false) {
   Config_update(BTdata, "bleconnect", BTConfig.bleConnect);
   // Identify AdaptiveScan deactivation to pass to continuous mode or activation to come back to default settings
   if (startup == false) {
+    if (BTdata.containsKey("hasspresence") && BTdata["hasspresence"] == false && BTConfig.presenceEnable == true) {
+      BTdata["adaptivescan"] = true;
+#  ifdef ZmqttDiscovery
+      // Remove discovered entities
+      eraseTopic("number", (char*)getUniqueId("presenceawaytimer", "").c_str());
+#  endif
+    } else if (BTdata.containsKey("hasspresence") && BTdata["hasspresence"] == true && BTConfig.presenceEnable == false) {
+      BTdata["adaptivescan"] = false;
+    }
+
     if (BTdata.containsKey("adaptivescan") && BTdata["adaptivescan"] == false && BTConfig.adaptiveScan == true) {
       BTdata["interval"] = MinTimeBtwScan;
       BTdata["intervalacts"] = MinTimeBtwScan;
@@ -157,9 +167,12 @@ void BTConfig_fromJson(JsonObject& BTdata, bool startup = false) {
     }
   }
   Config_update(BTdata, "adaptivescan", BTConfig.adaptiveScan);
+  // Home Assistant presence message
+  Config_update(BTdata, "hasspresence", BTConfig.presenceEnable);
 #  ifdef ZmqttDiscovery
   // Create discovery entities
   btScanParametersDiscovery();
+  btPresenceParametersDiscovery();
 #  endif
   // Time before before active scan
   // Scan interval set
@@ -173,8 +186,6 @@ void BTConfig_fromJson(JsonObject& BTdata, bool startup = false) {
   Config_update(BTdata, "onlysensors", BTConfig.pubOnlySensors);
   // publish devices which randomly change their MAC addresses
   Config_update(BTdata, "randommacs", BTConfig.pubRandomMACs);
-  // Home Assistant presence message
-  Config_update(BTdata, "hasspresence", BTConfig.presenceEnable);
   // Home Assistant presence message topic
   Config_update(BTdata, "presenceTopic", BTConfig.presenceTopic);
   // Home Assistant presence message use iBeacon UUID
@@ -367,6 +378,7 @@ BLEdevice* getDeviceByMac(const char* mac) {
     if ((strcmp((*it)->macAdr, mac) == 0)) {
       return *it;
     }
+    vTaskDelay(1);
   }
   return &NO_BT_DEVICE_FOUND;
 }
@@ -473,6 +485,7 @@ void dumpDevices() {
     Log.trace(F("connect %d" CR), p->connect);
     Log.trace(F("sensorModel_id %d" CR), p->sensorModel_id);
     Log.trace(F("LastUpdate %u" CR), p->lastUpdate);
+    vTaskDelay(1);
   }
 }
 
@@ -659,7 +672,8 @@ void procBLETask(void* pvParameters) {
       } else {
         Log.trace(F("Filtered MAC device" CR));
       }
-      updateDevicesStatus();
+      if (BTConfig.presenceEnable)
+        updateDevicesStatus();
     }
   }
 }
@@ -1000,13 +1014,13 @@ void launchBTDiscovery(bool overrideDiscovery) {
                               model.c_str(), brand.c_str(), model_id.c_str(), macWOdots.c_str(), false,
                               stateClassMeasurement);
             }
-            if ((p->sensorModel_id == TheengsDecoder::BLE_ID_NUM::NUT ||
-                 p->sensorModel_id == TheengsDecoder::BLE_ID_NUM::MIBAND ||
-                 p->sensorModel_id == TheengsDecoder::BLE_ID_NUM::TAGIT ||
-                 p->sensorModel_id == TheengsDecoder::BLE_ID_NUM::TILE ||
-                 p->sensorModel_id == TheengsDecoder::BLE_ID_NUM::ITAG ||
-                 p->sensorModel_id == TheengsDecoder::BLE_ID_NUM::RUUVITAG_RAWV1 ||
-                 p->sensorModel_id == TheengsDecoder::BLE_ID_NUM::RUUVITAG_RAWV2)) {
+            if (p->sensorModel_id == TheengsDecoder::BLE_ID_NUM::NUT ||
+                p->sensorModel_id == TheengsDecoder::BLE_ID_NUM::MIBAND ||
+                p->sensorModel_id == TheengsDecoder::BLE_ID_NUM::TAGIT ||
+                p->sensorModel_id == TheengsDecoder::BLE_ID_NUM::TILE ||
+                p->sensorModel_id == TheengsDecoder::BLE_ID_NUM::ITAG ||
+                p->sensorModel_id == TheengsDecoder::BLE_ID_NUM::RUUVITAG_RAWV1 ||
+                p->sensorModel_id == TheengsDecoder::BLE_ID_NUM::RUUVITAG_RAWV2) {
               createDiscovery("device_tracker",
                               discovery_topic.c_str(), entity_name.c_str(), unique_id.c_str(),
                               will_Topic, "occupancy", "{% if value_json.rssi -%}home{%- else -%}not_home{%- endif %}",

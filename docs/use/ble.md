@@ -6,7 +6,7 @@ By default the gateway scans the advertizing BLE devices nearby with their MAC a
 :::
 
 ## Receiving signals from BLE tracker devices for Presence detection
-By default the gateway will detect the BLE trackers from NUT, TAGIT, ITAG, MiBand, Amazfit and RuuviTag and create automaticaly a device tracker entity following the Home Assistant discovery convention.
+By default the gateway will detect the BLE trackers from Tile, NUT, TAGIT, ITAG, MiBand, Amazfit and RuuviTag and create automaticaly a device tracker entity following the Home Assistant discovery convention (if the auto discovery is activated).
 The entity can be attached to a person to leverage presence detection. The `away` or `not home` state is triggered if the BLE tracker is not detected during the timer defined by `presenceawaytimer`.
 
 ![](../img/OpenMQTTGateway-BLE-tracker-Home-Assistant.png)
